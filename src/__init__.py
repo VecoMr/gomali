@@ -2,6 +2,7 @@ from subprocess import Popen, PIPE
 from copy import copy
 from typing import List
 from random import randint
+from json import loads
 
 class Player:
     def __init__(self, path):
@@ -16,13 +17,14 @@ class Player:
         if msg[0] != 'OK':
             raise Exception(' '.join(msg[1:]))
 
-    def __get_about(self):
+    def get_about(self):
         self.process.stdin.write('ABOUT\n')
         self.process.stdin.flush()
-        self.name = self.process.stdout.readline().strip()
-        self.version = self.process.stdout.readline().strip()
-        self.author = self.process.stdout.readline().strip()
-        self.country = self.process.stdout.readline().strip()
+        msg = self.process.stdout.readline().split('"')
+        self.name = msg[1]
+        self.version = msg[3]
+        self.author = msg[5]
+        self.country = msg[7]
 
     def __str__(self):
         return self.path
@@ -63,7 +65,7 @@ class Game:
         else:
             self.players.append(Player(player1))
             self.players.append(Player(player2))
-        self.board : Board = Board(load=load)
+        self.board : Board = Board(load=load, size=size)
         self.history : List[Board] = []
         self.turn : int = -1
         self.winner = None
@@ -73,12 +75,19 @@ class Game:
 
     def init_game(self):
         [player.set_size(self.board.size) for player in self.players]
+        [player.get_about() for player in self.players]
+
+    def check_winner(self):
+        for i in range(self.board.size - 4):
+            for j in range(self.board.size - 4):
+                if self.board[i][j] != 0 and self.board[i][j] == self.board[i + 1][j + 1] == self.board[i + 2][j + 2] == self.board[i + 3][j + 3] == self.board[i + 4][j + 4]:
+                    return self.board[i][j]
+        return None
 
     def play_turn(self):
-        self.turn += 1
         player = self.turn % 2
         self.history.append(copy(self.board))
-        self.players[player].process.stdin.write(str(self.board))
+        self.players[player].process.stdin.write()
         self.players[player].process.stdin.flush()
         msg = self.players[player].process.stdout.readline().split()
         if msg[0] != 'OK':
@@ -87,10 +96,11 @@ class Game:
         if self.board[x][y] != 0:
             raise Exception('The move ({}, {}) is not valid'.format(x, y))
         self.board[x][y] = player + 1
+        self.turn += 1
         self.winner = self.check_winner()
 
     def start_game(self):
         self.init_game()
-        while not self.winner:
-            self.play_turn()
-        print(f'Player {self.winner} won')
+        # while not self.winner:
+        #     self.play_turn()
+        # print(f'Player {self.winner} won')
