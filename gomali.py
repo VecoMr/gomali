@@ -7,6 +7,7 @@ def main():
     parser = argparse.ArgumentParser(description='Gomali: A simple Gomoku manager in python')
     parser.add_argument('-p1', '--player1', help='the path to the ia for the player 1', required=True)
     parser.add_argument('-p2', '--player2', help='the path to the ia for the player 2', required=True)
+    parser.add_argument('--first', help='the player who starts the game', choices=['1', '2', 'random'], default='random')
     parser.add_argument('-s', '--size', help='the size of the board', default=20, type=int)
     parser.add_argument('-l','--load', help='load a game from a file', default=None)
     args = parser.parse_args()
@@ -24,7 +25,7 @@ def main():
         print('The size of the board must be greater than 5')
         exit(1)
 
-    game = Game(args.player1, args.player2)
+    game = Game(args.player1, args.player2, load=args.load, first=args.first, size=args.size)
     game.init_game()
 
 
